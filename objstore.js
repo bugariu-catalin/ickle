@@ -21,11 +21,10 @@ function SplitStorage(baseDirectory) {
  * Stores a given object, split by properties.
  *
  * @param {Object} completeObject - An object to split into properties.
- *
- * @returns {Array} The array of property names used as filenames or 'null' if
- *                  an error occurred.
+ * @param {requestCallback} {Array} The array of property names used as filenames or 'null' if
+ *                                  an error occurred.
  */
-SplitStorage.prototype.storeObject = function (completeObject) {
+SplitStorage.prototype.storeObject = function (completeObject, callback) {
     // This function takes a single object and decomposes it into two arrays,
     // the first holding a string containing the name of each property and
     // the second holding the value of that property.
@@ -44,16 +43,32 @@ SplitStorage.prototype.storeObject = function (completeObject) {
     //
     // The 'baseDirectory' class member is used to prefix the filename
     // with an appropriate storage directory.
+	//try {
+	var results = [],
+		items = Object.keys(completeObject),
+		count = 0,
+		error = false,
+		dir = this.baseDirectory;
+		
+		items.forEach(function (item){
+			storage.store(path.join(dir, item),JSON.stringify(completeObject[item]),function(err){
+				count++;
+				results.push(item);
+				if (err) error = true;
+				if (items.length==count) {
+					if (!error) callback(results); else callback(null);
+				}
+			});
+		});	
 };
 
 /**
  * Restores a complete object, merged from split objects.
  *
  * @param {Array} filenames - An array of filenames of objects to merge.
- *
- * @returns {Object} A complete object, or 'null' if an error occurred.
+ * @param {requestCallback} {Object} A complete object, or 'null' if an error occurred.
  */
-SplitStorage.prototype.restoreObject = function (filenames) {
+SplitStorage.prototype.restoreObject = function (filenames, callback) {
     // The function takes a set of filenames to retrieve values from, eg:
     // [ "foo", "baa" ]
     //
@@ -66,6 +81,24 @@ SplitStorage.prototype.restoreObject = function (filenames) {
     //
     // The 'baseDirectory' class member is used to prefix the filename
     // with an appropriate storage directory.
+	var results = {},
+		count = 0,
+		dir = this.baseDirectory,
+		error = false;
+
+		for (var key in filenames) {
+			(new function() { 
+				var k = key;
+				storage.restore(path.join(dir, filenames[key]),function(err, data){
+					count++;
+					results[filenames[k]] = JSON.parse(data);
+					if (err) error = true;
+					if (filenames.length==count) {
+						if (!error) callback(results); else callback(null);
+					}
+				});
+			})			
+		};		
 };
 
 module.exports = SplitStorage;

@@ -1,21 +1,14 @@
 var fs = require('fs');
 
-module.exports = function () {
-
-function store(filename, data) {
-    fs.writeFileSync(filename, data);
+function Storage() {
 }
 
-function restore(filename) {
-    return fs.readFileSync(filename);
+Storage.prototype.store = function(filename, data, callback) {
+	fs.writeFile(filename, data, callback)
 }
 
-return function (method) {
-    if (method == 1) {
-        return store;
-    } else if (method == 2) {
-        return restore;
-    }
+Storage.prototype.restore= function(filename, callback) {
+    return fs.readFile(filename, callback);
 }
 
-};
+module.exports = new Storage;
